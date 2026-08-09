@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INTERIO AI — ИИ-дизайн квартиры</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛋️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#7C3AED; --purple-dark:#6D28D9; --purple-deep:#4C1D95;
+  --purple-light:#A78BFA; --purple-pale:#C4B5FD;
+  --purple-soft:#F6F2FF; --purple-border:#E6DDFB;
+  --ink:#2B2440; --gray:#8B85A6; --white:#FFFFFF; --black:#0E0B14;
+  --warn:#F59E0B; --warn-bg:#FEF3C7; --warn-border:#FDE68A;
+  --ok:#10B981; --ok-bg:#D1FAE5; --ok-border:#A7F3D0;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',system-ui,sans-serif;background:var(--white);color:var(--ink);height:100vh;overflow:hidden}
+button{font-family:inherit}
+
+.decor{position:fixed;inset:0;z-index:0;pointer-events:none;color:var(--purple)}
+.decor.hidden{display:none}
+.decor svg{position:absolute;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:.13}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.06;background:var(--purple)}
+@keyframes floatA{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-26px) rotate(5deg)}}
+@keyframes floatB{0%,100%{transform:translateY(0) rotate(6deg)}50%{transform:translateY(22px) rotate(-5deg)}}
+@keyframes floatC{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(18px,-18px) rotate(8deg)}}
+@keyframes floatD{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(-16px,14px) rotate(-7deg)}}
+
+.topbar{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;gap:14px;padding:18px 32px}
+.logo{display:flex;align-items:center;gap:12px;font-family:'Unbounded';font-size:17px;font-weight:700;color:var(--purple-deep)}
+.logo-badge{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--purple-light),var(--purple-dark));display:grid;place-items:center;color:#fff;box-shadow:0 8px 22px rgba(124,58,237,.35)}
+.beta{font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple);background:var(--purple-soft);border:1px solid var(--purple-border);padding:5px 10px;border-radius:999px}
+.topbar-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
+.btn-icon{background:var(--purple-soft);border:1.5px solid var(--purple-border);color:var(--purple-dark);width:42px;height:42px;border-radius:12px;display:grid;place-items:center;cursor:pointer;transition:.25s}
+.btn-icon:hover{background:var(--purple-pale);transform:scale(1.08)}
+.btn-icon svg{width:20px;height:20px}
+
+.footer{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--black);color:#B7B2C8;display:flex;align-items:center;justify-content:space-between;gap:10px 26px;flex-wrap:wrap;padding:13px 30px;font-size:12.5px;font-weight:600;border-top:1px solid #2A2440}
+.footer b{color:#fff}.footer .f-item{display:flex;align-items:center;gap:9px}
+.footer .dot{width:8px;height:8px;border-radius:50%;background:var(--purple-light);box-shadow:0 0 12px var(--purple);flex:none}
+.footer .warn{color:#FFD166}.footer a{color:#B7B2C8;text-decoration:none;cursor:pointer}.footer a:hover{color:#fff}.footer .sep{opacity:.4}
+
+.screen{position:fixed;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:96px 24px 120px;opacity:0;visibility:hidden;transform:translateY(18px);transition:opacity .5s ease,transform .5s ease,visibility .5s}
+.screen.active{opacity:1;visibility:visible;transform:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;border:none;cursor:pointer;font-weight:800;border-radius:18px;transition:transform .25s,box-shadow .25s,background .25s,border-color .25s,color .25s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--purple-light),var(--purple-dark));color:#fff;padding:18px 40px;font-size:18px;box-shadow:0 12px 32px rgba(124,58,237,.35)}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(124,58,237,.45)}
+.btn-primary .arrow{transition:transform .3s}.btn-primary:hover .arrow{transform:translateX(6px)}
+.btn-outline{background:#fff;color:var(--purple-dark);border:2px solid var(--purple-border);padding:14px 28px;font-size:15.5px}
+.btn-outline:hover{border-color:var(--purple-light);background:var(--purple-soft)}
+.btn-ghost{background:transparent;color:var(--gray);padding:12px 18px;font-size:14.5px}
+.btn-ghost:hover{color:var(--purple-dark);background:var(--purple-soft)}
+
+.menu-content{position:relative;z-index:1;text-align:center;max-width:1020px;width:100%}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--purple-soft);border:1.5px solid var(--purple-border);color:var(--purple-dark);font-weight:700;font-size:13.5px;padding:9px 18px;border-radius:999px;margin-bottom:26px}
+h1{font-family:'Unbounded';font-weight:900;font-size:clamp(30px,5.2vw,58px);line-height:1.12}
+h1 .grad{background:linear-gradient(120deg,var(--purple-light),var(--purple-dark) 60%,var(--purple-deep));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{margin:22px auto 36px;max-width:560px;color:var(--gray);font-size:17.5px;line-height:1.65;font-weight:500}
+.features{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:40px}
+.feature{display:flex;align-items:center;gap:9px;background:#fff;border:1.5px solid var(--purple-border);border-radius:14px;padding:11px 18px;font-size:13.5px;font-weight:700;box-shadow:0 4px 14px rgba(76,29,149,.06)}
+.feature svg{color:var(--purple);flex:none}
+
+.status-banner{margin:0 auto 28px;max-width:640px;border-radius:18px;padding:18px 22px;display:flex;align-items:flex-start;gap:14px;text-align:left;font-size:14px;line-height:1.55;font-weight:600;transition:.4s;opacity:0;transform:translateY(-8px)}
+.status-banner.show{opacity:1;transform:none}
+.status-banner.blocked{background:var(--warn-bg);border:1.5px solid var(--warn-border);color:#78350F}
+.status-banner.online{background:var(--ok-bg);border:1.5px solid var(--ok-border);color:#064E3B}
+.status-banner .sb-icon{font-size:22px;flex:none;line-height:1}
+.status-banner .sb-body{flex:1}
+.status-banner b{font-weight:800}
+.status-banner .sb-steps{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
+.status-banner .step{background:#fff;border:1px solid #FDE68A;border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:700;color:#78350F}
+
+.gallery{margin-top:54px}
+.gallery-title{font-family:'Unbounded';font-size:15px;font-weight:700;color:var(--purple-deep);letter-spacing:.6px;text-transform:uppercase}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-top:22px}
+.gallery-item{border-radius:18px;overflow:hidden;border:1.5px solid var(--purple-border);background:#fff;box-shadow:0 8px 24px rgba(76,29,149,.08);position:relative;transition:transform .3s,box-shadow .3s}
+.gallery-item:hover{transform:translateY(-5px);box-shadow:0 16px 36px rgba(76,29,149,.16)}
+.gallery-item img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#EDE7FB linear-gradient(110deg,#EDE7FB 30%,#F8F5FF 50%,#EDE7FB 70%) 0 0/200% 100%;animation:ph 1.4s linear infinite}
+@keyframes ph{to{background-position:-200% 0}}
+.gallery-item img.ok{animation:none;background:#EDE7FB}
+.gallery-item figcaption{position:absolute;left:10px;bottom:10px;background:rgba(14,11,20,.72);backdrop-filter:blur(4px);color:#fff;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:999px}
+.disclaimer{margin-top:18px;display:inline-flex;align-items:center;gap:9px;background:var(--purple-soft);border:1.5px dashed var(--purple-pale);color:var(--purple-dark);font-size:13px;font-weight:800;padding:9px 18px;border-radius:999px}
+.disclaimer svg{color:var(--purple);flex:none}
+
+.panel{position:relative;z-index:1;width:min(660px,100%);text-align:center}
+.back-link{background:none;border:none;color:var(--gray);font-weight:700;font-size:14.5px;cursor:pointer;display:inline-flex;gap:8px;align-items:center;margin-bottom:18px;padding:8px 14px;border-radius:12px;transition:.25s}
+.back-link:hover{color:var(--purple-dark);background:var(--purple-soft)}
+.panel h2{font-family:'Unbounded';font-size:clamp(22px,3.4vw,32px);font-weight:700}
+.panel .sub{color:var(--gray);margin:12px 0 28px;font-size:15.5px;font-weight:500}
+.dropzone{border:2.5px dashed var(--purple-pale);background:var(--purple-soft);border-radius:26px;padding:44px 30px;cursor:pointer;transition:.3s}
+.dropzone:hover,.dropzone.drag{border-color:var(--purple);background:#EFE8FF;transform:scale(1.012)}
+.dz-icon{width:78px;height:78px;margin:0 auto 16px;border-radius:24px;background:#fff;color:var(--purple);display:grid;place-items:center;box-shadow:0 10px 26px rgba(124,58,237,.18)}
+.dz-title{font-size:19px;font-weight:800}
+.dz-or{color:var(--gray);font-size:13px;font-weight:600;margin:10px 0 14px}
+.dz-hint{margin-top:16px;color:var(--gray);font-size:12.5px;font-weight:600}
+.prompt-box{margin-top:20px;text-align:left;background:#fff;border:1.5px solid var(--purple-border);border-radius:20px;padding:18px 20px;box-shadow:0 8px 24px rgba(76,29,149,.08)}
+.prompt-label{font-weight:800;font-size:14px;color:var(--purple-deep);display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.prompt-box textarea{width:100%;border:1.5px solid var(--purple-border);border-radius:14px;padding:12px 14px;font:inherit;font-size:14.5px;resize:vertical;min-height:76px;color:var(--ink);background:var(--purple-soft);outline:none;transition:.2s}
+.prompt-box textarea:focus{border-color:var(--purple);background:#fff;box-shadow:0 0 0 4px rgba(124,58,237,.12)}
+.prompt-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.p-chip{border:1.5px solid var(--purple-border);background:#fff;color:var(--purple-dark);font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;cursor:pointer;transition:.2s}
+.p-chip:hover{background:var(--purple-soft);border-color:var(--purple-light)}
+.preview{margin-top:20px;background:#fff;border:1.5px solid var(--purple-border);border-radius:26px;overflow:hidden;box-shadow:0 20px 50px rgba(76,29,149,.12);text-align:left}
+.preview img{width:100%;max-height:320px;object-fit:cover;display:block}
+.preview-info{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.file-name{font-weight:700;font-size:14.5px;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+.loading-card{position:relative;z-index:1;text-align:center;display:flex;flex-direction:column;align-items:center}
+.spark{color:var(--purple);animation:spark 2.6s ease-in-out infinite;margin-bottom:24px}
+@keyframes spark{0%,100%{transform:rotate(0) scale(1)}50%{transform:rotate(180deg) scale(1.18)}}
+.percent{font-family:'Unbounded';font-weight:900;font-size:clamp(56px,9vw,92px);color:var(--purple-deep);line-height:1;font-variant-numeric:tabular-nums}
+.loading-status{color:var(--gray);font-weight:600;font-size:15px;margin-top:10px;min-height:22px;max-width:560px}
+.loading-caption{margin:34px 0 14px;font-weight:800;font-size:17px;color:var(--purple-dark)}
+.progress-track{width:min(540px,86vw);height:18px;border-radius:999px;background:#EFEAFB;overflow:hidden;box-shadow:inset 0 2px 5px rgba(76,29,149,.1)}
+.progress-fill{position:relative;height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--purple-light),var(--purple),var(--purple-dark));transition:width .12s linear;overflow:hidden}
+.progress-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:shimmer 1.1s linear infinite}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.load-hint{margin-top:16px;color:var(--gray);font-size:12.5px;font-weight:600;max-width:500px;line-height:1.5}
+
+.result-wrap{position:relative;z-index:1;width:min(1080px,100%);margin:0 auto;display:flex;flex-direction:column}
+.result-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.result-head h2{font-family:'Unbounded';font-size:clamp(20px,3vw,28px);font-weight:700}
+.concept-name{color:var(--purple);font-weight:800;font-size:14px;background:var(--purple-soft);border:1.5px solid var(--purple-border);padding:8px 14px;border-radius:999px}
+.prompt-user{align-self:flex-start;max-width:100%;background:var(--purple-soft);border:1.5px solid var(--purple-border);color:var(--purple-deep);font-size:13px;font-weight:700;padding:9px 14px;border-radius:14px;margin-bottom:14px}
+.main-image{border-radius:26px;overflow:hidden;box-shadow:0 26px 70px rgba(76,29,149,.2);border:5px solid #fff;outline:1.5px solid var(--purple-border);background:#F4F1FB}
+.main-image img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;animation:imgIn .7s ease;background:#EDE7FB}
+@keyframes imgIn{from{opacity:0;transform:scale(1.03)}to{opacity:1;transform:scale(1)}}
+.result-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:20px;flex-wrap:wrap}
+.result-note{color:var(--gray);font-size:13.5px;font-weight:600;max-width:560px}
+.btn-download{background:linear-gradient(135deg,var(--purple-light),var(--purple-dark));color:#fff;padding:16px 34px;font-size:16.5px;box-shadow:0 12px 30px rgba(124,58,237,.35);margin-left:auto}
+.btn-download:hover{transform:translateY(-3px);box-shadow:0 18px 42px rgba(124,58,237,.45)}
+.concepts-bottom{margin-top:30px;text-align:center}
+.concepts-title{font-family:'Unbounded';font-size:14px;font-weight:700;color:var(--purple-deep);letter-spacing:.6px;text-transform:uppercase}
+.concepts-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:16px}
+.thumb{border-radius:16px;overflow:hidden;border:2.5px solid transparent;cursor:pointer;position:relative;background:#fff;padding:0;box-shadow:0 6px 18px rgba(76,29,149,.1);transition:.25s}
+.thumb:hover{transform:translateY(-4px)}
+.thumb.active{border-color:var(--purple);box-shadow:0 10px 26px rgba(124,58,237,.3)}
+.thumb img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#EDE7FB}
+.thumb .thumb-label{position:absolute;left:8px;bottom:8px;background:rgba(14,11,20,.72);backdrop-filter:blur(4px);color:#fff;font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px}
+
+.about-wrap,.settings-wrap{position:relative;z-index:1;width:min(780px,100%);max-height:80vh;overflow-y:auto;padding:40px;background:#fff;border-radius:26px;box-shadow:0 26px 70px rgba(76,29,149,.2);border:1.5px solid var(--purple-border)}
+.about-wrap h2,.settings-wrap h2{font-family:'Unbounded';font-size:clamp(24px,4vw,36px);font-weight:700;margin-bottom:24px;color:var(--purple-deep)}
+.about-section{margin-bottom:28px}
+.about-section h3{font-family:'Unbounded';font-size:18px;font-weight:700;margin-bottom:12px;color:var(--purple-dark)}
+.about-section p{font-size:15px;line-height:1.7;color:var(--ink);margin-bottom:12px}
+.about-section ul{list-style:none;padding-left:0}
+.about-section li{padding:8px 0 8px 28px;position:relative;font-size:14.5px;line-height:1.6}
+.about-section li::before{content:"→";position:absolute;left:0;color:var(--purple);font-weight:800}
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:14px}
+.tech-item{background:var(--purple-soft);border:1.5px solid var(--purple-border);border-radius:14px;padding:14px;text-align:center}
+.tech-item b{display:block;font-size:14px;color:var(--purple-deep);margin-bottom:6px}
+.tech-item span{font-size:12.5px;color:var(--gray)}
+
+/* НАСТРОЙКИ */
+.settings-section{margin-bottom:32px}
+.settings-section h3{font-family:'Unbounded';font-size:18px;font-weight:700;margin-bottom:16px;color:var(--purple-dark)}
+.color-picker{display:flex;gap:14px;flex-wrap:wrap}
+.color-option{width:70px;height:70px;border-radius:18px;cursor:pointer;border:3px solid transparent;transition:.25s;position:relative}
+.color-option:hover{transform:scale(1.08)}
+.color-option.active{border-color:var(--ink);box-shadow:0 8px 22px rgba(0,0,0,.2)}
+.color-option.active::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:28px;font-weight:900}
+.color-purple{background:linear-gradient(135deg,#A78BFA,#6D28D9)}
+.color-yellow{background:linear-gradient(135deg,#FCD34D,#F59E0B)}
+.color-red{background:linear-gradient(135deg,#FCA5A5,#DC2626)}
+.color-blue{background:linear-gradient(135deg,#93C5FD,#2563EB)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--purple-soft);border:1.5px solid var(--purple-border);border-radius:16px}
+.toggle-row b{font-size:15px;color:var(--purple-deep)}
+.toggle-row span{font-size:13px;color:var(--gray);margin-top:4px}
+.toggle{position:relative;width:52px;height:28px;background:#E5E7EB;border-radius:999px;cursor:pointer;transition:.25s}
+.toggle.active{background:var(--purple)}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.toggle.active::after{left:27px}
+
+@media (max-width:640px){
+  .decor svg{opacity:.09}
+  .footer{padding:11px 16px;font-size:11.5px;justify-content:center;text-align:center}
+  .footer .f-mid{display:none}
+  .btn-download{width:100%}
+  .about-wrap,.settings-wrap{padding:28px 22px}
+}
+</style>
+</head>
+<body>
+
+<div class="decor" id="decor" aria-hidden="true">
+  <span class="blob" style="width:420px;height:420px;top:-140px;left:-140px"></span>
+  <span class="blob" style="width:380px;height:380px;bottom:-120px;right:-120px"></span>
+  <svg style="top:9%;left:4%;width:110px;animation:floatA 9s ease-in-out infinite" viewBox="0 0 64 64"><path d="M22 6h20l8 18H14z"/><path d="M32 24v30"/><path d="M20 58h24"/></svg>
+  <svg style="top:14%;right:6%;width:96px;animation:floatB 11s ease-in-out infinite" viewBox="0 0 64 64"><path d="M22 40h20l-3 18H25z"/><path d="M32 40V26"/><path d="M32 30c-10 2-15-6-15-15 9 0 15 5 15 15z"/><path d="M32 30c10 2 15-6 15-15-9 0-15 5-15 15z"/></svg>
+  <svg style="top:38%;left:6%;width:86px;animation:floatC 10s ease-in-out infinite" viewBox="0 0 64 64"><rect x="10" y="12" width="44" height="40" rx="4"/><rect x="18" y="20" width="28" height="24" rx="2"/><path d="M20 40l8-9 6 6 7-9 5 7"/></svg>
+  <svg style="top:6%;left:44%;width:78px;animation:floatD 8.5s ease-in-out infinite" viewBox="0 0 64 64"><path d="M32 4v12"/><path d="M16 34a16 16 0 0 1 32 0z"/><circle cx="32" cy="41" r="5"/></svg>
+  <svg style="bottom:14%;left:4%;width:120px;animation:floatB 12s ease-in-out infinite" viewBox="0 0 64 64"><rect x="14" y="12" width="36" height="16" rx="7"/><rect x="8" y="26" width="48" height="14" rx="6"/><path d="M16 40v8M48 40v8"/></svg>
+  <svg style="bottom:18%;right:6%;width:84px;animation:floatA 10s ease-in-out infinite" viewBox="0 0 64 64"><path d="M26 12h12"/><path d="M28 12c0 9-9 13-9 23a13 13 0 0 0 26 0c0-10-9-14-9-23"/></svg>
+  <svg style="top:34%;right:11%;width:70px;animation:floatC 9.5s ease-in-out infinite" viewBox="0 0 64 64"><circle cx="32" cy="32" r="21"/><path d="M32 21v11l8 6"/></svg>
+  <svg style="top:56%;right:4%;width:92px;animation:floatD 11.5s ease-in-out infinite" viewBox="0 0 64 64"><path d="M8 50h48"/><rect x="16" y="26" width="8" height="24" rx="1.5"/><rect x="27" y="18" width="8" height="32" rx="1.5"/><rect x="38" y="30" width="8" height="20" rx="1.5"/></svg>
+  <svg style="bottom:9%;left:38%;width:110px;animation:floatC 13s ease-in-out infinite" viewBox="0 0 64 64"><ellipse cx="32" cy="32" rx="26" ry="13"/><ellipse cx="32" cy="32" rx="15" ry="7"/></svg>
+  <svg style="top:62%;left:11%;width:64px;animation:floatA 8s ease-in-out infinite" viewBox="0 0 64 64"><rect x="24" y="28" width="16" height="28" rx="4"/><path d="M32 28v-6"/><path d="M32 10c4 4 4 8 0 11-4-3-4-7 0-11z"/></svg>
+  <svg style="top:70%;right:24%;width:76px;animation:floatB 9s ease-in-out infinite" viewBox="0 0 64 64"><path d="M16 56V28a16 16 0 0 1 32 0v28"/><path d="M23 56V28a9 9 0 0 1 18 0v28"/><path d="M12 56h40"/></svg>
+  <svg style="top:22%;left:24%;width:66px;animation:floatD 10.5s ease-in-out infinite" viewBox="0 0 64 64"><path d="M14 24h28v20a8 8 0 0 1-8 8H22a8 8 0 0 1-8-8z"/><path d="M42 28h4a6 6 0 0 1 0 12h-4"/><path d="M22 16c0-3 4-3 4-7M32 16c0-3 4-3 4-7"/></svg>
+</div>
+
+<header class="topbar">
+  <div class="logo">
+    <span class="logo-badge"><svg width="22" height="22" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="12" width="36" height="16" rx="7"/><rect x="8" y="26" width="48" height="14" rx="6"/><path d="M16 40v8M48 40v8"/></svg></span>
+    INTERIO&nbsp;AI
+  </div>
+  <span class="beta">beta</span>
+  <div class="topbar-actions">
+    <button class="btn-icon" onclick="go('screen-settings')" title="Настройки">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<section class="screen active" id="screen-menu">
+  <div class="menu-content">
+    <div class="chip">✦ Нейросеть для дизайна интерьера</div>
+    <h1>Пустая квартира?<br><span class="grad">ИИ обставит её за вас</span></h1>
+    <p class="lead">Загрузите фото пустой комнаты, опишите пожелания — и нейросеть сгенерирует настоящий дизайн-концепт.</p>
+    <div class="status-banner" id="statusBanner" role="status" aria-live="polite"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="go('screen-upload')">
+        Начать
+        <svg class="arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
+      </button>
+      <button class="btn btn-outline" onclick="recheckStatus()">🔄 Проверить доступ</button>
+    </div>
+    <div class="features">
+      <div class="feature"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>Реальная генерация</div>
+      <div class="feature"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21a9 9 0 1 1 9-9c0 2-1.5 3-3 3h-4a2 2 0 0 0-2 2c0 2-1 4 0 4z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/></svg>4 стиля × ваш промт</div>
+      <div class="feature"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19.5h16"/></svg>Скачивание в 1 клик</div>
+    </div>
+    <div class="gallery">
+      <div class="gallery-title">Концепты работы</div>
+      <div class="gallery-grid" id="galleryGrid"></div>
+      <div class="disclaimer">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2 6.6 6.5 2-6.5 2-2 6.6-2-6.6L3.5 10l6.5-2z"/></svg>
+        Сгенерировано ИИ, это только Концепт
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="screen-upload">
+  <div class="panel">
+    <button class="back-link" onclick="go('screen-menu')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
+      Назад
+    </button>
+    <h2>Загрузите фото пустой квартиры</h2>
+    <p class="sub">Фото останется у вас в браузере и понадобится для сравнения «до / после».</p>
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept="image/*" hidden>
+      <div class="dz-icon"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/></svg></div>
+      <div class="dz-title">Перетащите фото сюда</div>
+      <div class="dz-or">— или —</div>
+      <span class="btn btn-outline">Открыть проводник</span>
+      <div class="dz-hint">JPG · PNG · HEIC, до 20 МБ</div>
+    </div>
+    <div class="prompt-box">
+      <div class="prompt-label">✨ Опишите пожелания — ИИ учтёт их в генерации</div>
+      <textarea id="promptInput" placeholder="Я хочу, чтобы была зелёно-белая кровать с зелёным ковром и лампой…"></textarea>
+      <div class="prompt-chips">
+        <button class="p-chip" onclick="setPrompt('Я хочу, чтобы была зелёно-белая кровать с зелёным ковром и лампой…')">🛏 зелёно-белая кровать</button>
+        <button class="p-chip" onclick="setPrompt('Лофт: кирпичная стена, металл и много света')">🧱 лофт с кирпичом</button>
+        <button class="p-chip" onclick="setPrompt('Минимализм: ничего лишнего, светлые тона')">⬜ минимализм</button>
+      </div>
+    </div>
+    <div class="preview" id="preview" hidden>
+      <img id="previewImg" alt="Фото вашей квартиры">
+      <div class="preview-info">
+        <div class="file-name" id="fileName">photo.jpg</div>
+        <div class="preview-actions">
+          <button class="btn btn-ghost" id="changeBtn">Заменить фото</button>
+          <button class="btn btn-primary" style="padding:14px 28px;font-size:16px" onclick="startGeneration()">
+            Продолжить
+            <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="screen-loading">
+  <div class="loading-card">
+    <svg class="spark" width="62" height="62" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2 6.6 6.5 2-6.5 2-2 6.6-2-6.6L3.5 10l6.5-2z"/><path d="M19.5 14.5l1 3.2 3.2 1-3.2 1-1 3.2-1-3.2-3.2-1 3.2-1z" opacity=".6"/></svg>
+    <div class="percent" id="percent">0%</div>
+    <div class="loading-status" id="loadingStatus">Отправляем запрос нейросети…</div>
+    <div class="loading-caption">ИИ уже делает концепт</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <button class="btn btn-ghost" style="margin-top:26px" onclick="cancelGeneration()">✕ Отменить</button>
+    <div class="load-hint">Генерация занимает 15–90 секунд. Если долго не растёт — включите VPN и нажмите «Отменить».</div>
+  </div>
+</section>
+
+<section class="screen" id="screen-result">
+  <div class="result-wrap">
+    <div class="result-head">
+      <h2 id="resultTitle">Ваш дизайн-концепт готов ✨</h2>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="concept-name" id="conceptName"></div>
+        <button class="btn btn-ghost" id="originalBtn" onclick="toggleOriginal(this)" hidden>👁 Ваше фото</button>
+        <button class="btn btn-ghost" onclick="restart()">↺ Новый проект</button>
+      </div>
+    </div>
+    <div class="prompt-user" id="promptUser" hidden></div>
+    <div class="main-image"><img id="mainImage" alt="Сгенерированный дизайн-концепт"></div>
+    <div class="result-footer">
+      <div class="result-note" id="resultNote">Нажимайте на концепты снизу, чтобы сравнить варианты.</div>
+      <button class="btn btn-outline" id="retryBtn" hidden onclick="startGeneration()">🔄 Повторить генерацию</button>
+      <button class="btn btn-download" onclick="downloadCurrent()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19.5h16"/></svg>
+        Скачать
+      </button>
+    </div>
+    <div class="concepts-bottom">
+      <div class="concepts-title">Концепты работы</div>
+      <div class="concepts-row" id="conceptsRow"></div>
+      <div class="disclaimer">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2 6.6 6.5 2-6.5 2-2 6.6-2-6.6L3.5 10l6.5-2z"/></svg>
+        Сгенерировано ИИ, это только Концепт
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="screen-about">
+  <div class="about-wrap">
+    <button class="back-link" onclick="go('screen-menu')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
+      Назад
+    </button>
+    <h2>О проекте INTERIO AI</h2>
+    
+    <div class="about-section">
+      <h3>🎯 Что это?</h3>
+      <p>INTERIO AI — это веб-приложение, которое помогает визуализировать дизайн интерьера с помощью искусственного интеллекта. Вы загружаете фото пустой комнаты, описываете пожелания, а нейросеть генерирует концепт дизайна в разных стилях.</p>
+    </div>
+
+    <div class="about-section">
+      <h3>⚡ Как это работает?</h3>
+      <ul>
+        <li>Вы выбираете фото пустой квартиры</li>
+        <li>Описываете пожелания (например: «зелёно-белая кровать с зелёным ковром»)</li>
+        <li>ИИ генерирует 4 концепта в разных стилях: скандинавский, минимализм, лофт, эко</li>
+        <li>Вы выбираете понравившийся вариант и скачиваете его</li>
+      </ul>
+    </div>
+
+    <div class="about-section">
+      <h3>🛠 Технологии</h3>
+      <div class="tech-grid">
+        <div class="tech-item">
+          <b>Frontend</b>
+          <span>HTML, CSS, JavaScript</span>
+        </div>
+        <div class="tech-item">
+          <b>ИИ-генерация</b>
+          <span>Pollinations.ai (FLUX)</span>
+        </div>
+        <div class="tech-item">
+          <b>Хостинг</b>
+          <span>Render.com</span>
+        </div>
+        <div class="tech-item">
+          <b>Дизайн</b>
+          <span>Сгенерирован ИИ</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-section">
+      <h3>⚠ Важные моменты</h3>
+      <ul>
+        <li>Все изображения генерируются нейросетью и носят ознакомительный характер</li>
+        <li>Сервис Pollinations.ai может быть заблокирован в некоторых регионах — используйте VPN</li>
+        <li>Проект находится в стадии beta — возможны баги и неточности</li>
+        <li>Ваши фото остаются только в вашем браузере и не передаются на серверы</li>
+      </ul>
+    </div>
+
+    <div class="about-section">
+      <h3>📧 Контакты</h3>
+      <p>Если у вас есть идеи по улучшению или вы нашли баг — напишите нам через форму поддержки в футере.</p>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="screen-settings">
+  <div class="settings-wrap">
+    <button class="back-link" onclick="go('screen-menu')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
+      Назад
+    </button>
+    <h2>⚙ Настройки</h2>
+    
+    <div class="settings-section">
+      <h3>🎨 Главный цвет</h3>
+      <div class="color-picker">
+        <div class="color-option color-purple active" data-color="purple" onclick="setColor('purple')"></div>
+        <div class="color-option color-yellow" data-color="yellow" onclick="setColor('yellow')"></div>
+        <div class="color-option color-red" data-color="red" onclick="setColor('red')"></div>
+        <div class="color-option color-blue" data-color="blue" onclick="setColor('blue')"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>✨ Фоновые анимации</h3>
+      <div class="toggle-row">
+        <div>
+          <b>Показывать элементы декора</b>
+          <div>Парящие мебель и декор на фоне (как в IKEA)</div>
+        </div>
+        <div class="toggle active" id="decorToggle" onclick="toggleDecor()"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="f-item"><span class="dot"></span><span><b>INTERIO AI</b> · v0.7 beta</span></div>
+  <div class="f-item f-mid"><span class="warn">⚠</span><span>Сайт сгенерирован ИИ — могут быть баги. Все изображения созданы нейросетью.</span></div>
+  <div class="f-item"><span>© 2025</span><span class="sep">·</span><a onclick="go('screen-about')">О проекте</a><span class="sep">·</span><a onclick="go('screen-settings')">Настройки</a><span class="sep">·</span><a href="#">Поддержка</a></div>
+</footer>
+
+<script>
+const POLLINATIONS_ENDPOINT='https://image.pollinations.ai/prompt/';
+const STYLES=[
+  {name:'Скандинавский', desc:'scandinavian ikea style, light wood, white walls, cozy textiles, plants', fb:'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=60'},
+  {name:'Минимализм',    desc:'minimalist interior, clean lines, neutral tones, nothing extra',          fb:'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=60'},
+  {name:'Лофт',          desc:'industrial loft, brick wall, black metal, warm floor lamp',               fb:'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=60'},
+  {name:'Эко · зелёный', desc:'eco style, green and white palette, green round carpet, floor lamp, plants', fb:'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=60'},
+];
+
+const COLORS={
+  purple:{primary:'#7C3AED',dark:'#6D28D9',deep:'#4C1D95',light:'#A78BFA',pale:'#C4B5FD',soft:'#F6F2FF',border:'#E6DDFB'},
+  yellow:{primary:'#F59E0B',dark:'#D97706',deep:'#92400E',light:'#FCD34D',pale:'#FDE68A',soft:'#FFFBEB',border:'#FDE68A'},
+  red:{primary:'#DC2626',dark:'#B91C1C',deep:'#7F1D1D',light:'#FCA5A5',pale:'#FECACA',soft:'#FEF2F2',border:'#FECACA'},
+  blue:{primary:'#2563EB',dark:'#1D4ED8',deep:'#1E3A8A',light:'#93C5FD',pale:'#BFDBFE',soft:'#EFF6FF',border:'#BFDBFE'}
+};
+
+const $=id=>document.getElementById(id);
+let concepts=[], current=0, loadTimer=null, promptText='', userFileURL=null, showingOriginal=false, genToken=0, serviceOnline=null;
+let currentColor='purple', decorVisible=true;
+
+function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));}
+function setPrompt(t){$('promptInput').value=t;$('promptInput').focus();}
+function fbSwap(el){el.onerror=null;el.src=el.dataset.fb;el.classList.add('ok');}
+const short=t=>t.length>46?t.slice(0,46)+'…':t;
+
+function setColor(color){
+  currentColor=color;
+  const c=COLORS[color];
+  const root=document.documentElement;
+  root.style.setProperty('--purple',c.primary);
+  root.style.setProperty('--purple-dark',c.dark);
+  root.style.setProperty('--purple-deep',c.deep);
+  root.style.setProperty('--purple-light',c.light);
+  root.style.setProperty('--purple-pale',c.pale);
+  root.style.setProperty('--purple-soft',c.soft);
+  root.style.setProperty('--purple-border',c.border);
+  document.querySelectorAll('.color-option').forEach(el=>el.classList.remove('active'));
+  document.querySelector(`[data-color="${color}"]`).classList.add('active');
+  localStorage.setItem('interio-color',color);
+}
+
+function toggleDecor(){
+  decorVisible=!decorVisible;
+  $('decor').classList.toggle('hidden',!decorVisible);
+  $('decorToggle').classList.toggle('active',decorVisible);
+  localStorage.setItem('interio-decor',decorVisible?'1':'0');
+}
+
+function loadSettings(){
+  const savedColor=localStorage.getItem('interio-color');
+  const savedDecor=localStorage.getItem('interio-decor');
+  if(savedColor) setColor(savedColor);
+  if(savedDecor==='0'){decorVisible=false;$('decor').classList.add('hidden');$('decorToggle').classList.remove('active');}
+}
+
+async function checkService(){
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),5000);
+  try{
+    await fetch(POLLINATIONS_ENDPOINT+'test?width=1&height=1&nologo=true&seed=1',{
+      method:'HEAD', mode:'no-cors', signal:controller.signal, cache:'no-store'
+    });
+    clearTimeout(timeout);
+    return true;
+  }catch(e){
+    clearTimeout(timeout);
+    return false;
+  }
+}
+
+function renderStatus(){
+  const b=$('statusBanner');
+  b.classList.remove('show','blocked','online');
+  if(serviceOnline===null){
+    b.innerHTML=`<span class="sb-icon">⏳</span><div class="sb-body">Проверяем доступность сервиса генерации…</div>`;
+    b.classList.add('online');
+    setTimeout(()=>b.classList.add('show'),30);
+    return;
+  }
+  if(serviceOnline){
+    b.innerHTML=`<span class="sb-icon">✅</span><div class="sb-body"><b>Сервис генерации доступен.</b> Можно создавать концепты!</div>`;
+    b.classList.add('online');
+  } else {
+    b.innerHTML=`
+      <span class="sb-icon">⚠️</span>
+      <div class="sb-body">
+        <b>Сервис генерации заблокирован</b> (скорее всего провайдером или регионом).<br>
+        Чтобы включить ИИ-генерацию, сделайте одно из:
+        <div class="sb-steps">
+          <span class="step">1. Включите VPN (ProtonVPN / WARP)</span>
+          <span class="step">2. Или откройте в Opera/Brave с VPN</span>
+          <span class="step">3. Или попробуйте с мобильного интернета</span>
+        </div>
+        После этого нажмите <b>«🔄 Проверить доступ»</b>.<br>
+        Пока можно посмотреть <a href="#" onclick="event.preventDefault();document.querySelector('#galleryGrid').scrollIntoView({behavior:'smooth'});return false;" style="color:#78350F;font-weight:800">примеры концептов</a> из галереи ниже.
+      </div>`;
+    b.classList.add('blocked');
+  }
+  setTimeout(()=>b.classList.add('show'),30);
+}
+
+async function recheckStatus(){
+  serviceOnline=null;
+  renderStatus();
+  serviceOnline=await checkService();
+  renderStatus();
+  renderGallery();
+}
+
+function buildPrompt(styleDesc){
+  return 'photorealistic interior design photo of a furnished cozy apartment room, '
+    + styleDesc
+    + (promptText ? ', client wishes: '+promptText : '')
+    + ', ikea catalog style, soft daylight, high detail, 4k';
+}
+function pollUrl(prompt,seed,w,h){
+  return POLLINATIONS_ENDPOINT+encodeURIComponent(prompt)
+    +'?width='+w+'&height='+h+'&seed='+seed+'&nologo=true&model=flux';
+}
+
+function renderGallery(){
+  $('galleryGrid').innerHTML=STYLES.map((s,i)=>{
+    const src = serviceOnline
+      ? pollUrl('photorealistic interior: '+s.desc+', ikea catalog style', 700+i*17, 640, 400)
+      : s.fb;
+    return `<figure class="gallery-item"><img loading="lazy" src="${src}" data-fb="${s.fb}" onerror="fbSwap(this)" onload="this.classList.add('ok')" alt="Концепт: ${s.name}"><figcaption>${s.name}</figcaption></figure>`;
+  }).join('');
+}
+
+const dropzone=$('dropzone'), fileInput=$('fileInput'), preview=$('preview');
+dropzone.addEventListener('click',()=>fileInput.click());
+['dragover','dragenter'].forEach(e=>dropzone.addEventListener(e,ev=>{ev.preventDefault();dropzone.classList.add('drag');}));
+['dragleave','drop'].forEach(e=>dropzone.addEventListener(e,ev=>{ev.preventDefault();dropzone.classList.remove('drag');}));
+dropzone.addEventListener('drop',ev=>{const f=ev.dataTransfer.files[0]; if(f)handleFile(f);});
+fileInput.addEventListener('change',()=>{if(fileInput.files[0])handleFile(fileInput.files[0]);});
+$('changeBtn').addEventListener('click',()=>fileInput.click());
+function handleFile(f){
+  if(!f.type.startsWith('image/')){alert('Выберите файл изображения (JPG, PNG…)');return;}
+  userFileURL=URL.createObjectURL(f);
+  $('previewImg').src=userFileURL;
+  $('fileName').textContent=f.name;
+  dropzone.hidden=true; preview.hidden=false;
+}
+
+function tryLoad(url,tries){
+  return new Promise(res=>{
+    const im=new Image();
+    const to=setTimeout(retryOrFail,60000);
+    im.onload=()=>{clearTimeout(to);res(true);};
+    im.onerror=retryOrFail;
+    function retryOrFail(){
+      clearTimeout(to);
+      if(tries>1){ setTimeout(()=>{tryLoad(url,tries-1).then(res);},2500); }
+      else res(false);
+    }
+    im.src=url;
+  });
+}
+
+function startGeneration(){
+  if(serviceOnline===false){
+    if(!confirm('⚠ Сервис генерации заблокирован. Всё равно попробовать? (скорее всего не загрузится — лучше включить VPN)')) return;
+  }
+  promptText=$('promptInput').value.trim();
+  showingOriginal=false;
+  const token=++genToken;
+  go('screen-loading');
+  $('progressFill').style.width='0%'; $('percent').textContent='0%';
+  $('loadingStatus').textContent= promptText? 'Читаем ваш промт: «'+short(promptText)+'»' : 'Отправляем запрос нейросети…';
+
+  const seedBase=(Date.now()%900000)+11;
+  concepts=STYLES.map((s,i)=>({...s, url:pollUrl(buildPrompt(s.desc), seedBase+i*101, 1280, 768)}));
+
+  let loaded=0, settled=0, realReady=false;
+  concepts.forEach((c,i)=>{
+    setTimeout(async ()=>{
+      if(token!==genToken) return;
+      $('loadingStatus').textContent='Нейросеть рисует концепт '+(i+1)+' из '+concepts.length+'…';
+      const ok=await tryLoad(c.url,2);
+      if(token!==genToken) return;
+      settled++;
+      if(ok){loaded++; $('loadingStatus').textContent='Концепт '+(i+1)+' из '+concepts.length+' готов ✓';}
+      if(settled===concepts.length) realReady=true;
+    }, i*3500);
+  });
+
+  let p=0, started=Date.now();
+  clearInterval(loadTimer);
+  loadTimer=setInterval(()=>{
+    if(token!==genToken){clearInterval(loadTimer);return;}
+    const cap = realReady?100 : Math.min(90, loaded*24+10);
+    let speed=(cap-p)*0.028+0.1;
+    if(Math.random()<0.12) speed*=0.2;
+    p=Math.min(cap, p+speed*(0.6+Math.random()*0.8));
+    if(realReady&&p>=90) p=Math.min(100,p+2.5);
+    if(Date.now()-started>180000) realReady=true;
+    const v=Math.floor(p);
+    $('percent').textContent=v+'%';
+    $('progressFill').style.width=v+'%';
+    if(p>=100){clearInterval(loadTimer); setTimeout(()=>{ if(token===genToken) openResult(loaded===0); },500);}
+  },120);
+}
+function cancelGeneration(){ genToken++; clearInterval(loadTimer); go('screen-upload'); }
+
+function openResult(allFailed){
+  $('retryBtn').hidden=!allFailed;
+  $('resultTitle').textContent= allFailed? 'Не получилось сгенерировать 😔' : 'Ваш дизайн-концепт готов ✨';
+  $('resultNote').textContent= allFailed
+    ? '⚠ Сервис генерации недоступен. Включите VPN (ProtonVPN / WARP), откройте сайт в Opera/Brave, либо попробуйте с мобильного интернета — затем нажмите «Повторить генерацию».'
+    : 'Нажимайте на концепты снизу, чтобы сравнить варианты.';
+  if(allFailed) concepts.forEach(c=>c.url=c.fb);
+  const chip=$('promptUser');
+  if(promptText){chip.hidden=false; chip.textContent='✨ Ваш промт: «'+promptText+'»';}
+  else chip.hidden=true;
+  $('originalBtn').hidden=!userFileURL;
+  selectConcept(matchPrompt(promptText));
+  go('screen-result');
+}
+
+function matchPrompt(t){
+  t=(t||'').toLowerCase();
+  if(/зелен|green|эко|растен|трав/.test(t)) return 3;
+  if(/лофт|кирпич|металл|бетон/.test(t))    return 2;
+  if(/минимал|ничего лишн/.test(t))         return 1;
+  if(/сканд|икеа|ikea|светл|уютн/.test(t))  return 0;
+  return 0;
+}
+
+function renderThumbs(){
+  $('conceptsRow').innerHTML=concepts.map((c,i)=>
+    `<button class="thumb ${i===current?'active':''}" onclick="selectConcept(${i})"><img src="${c.url}" data-fb="${c.fb}" onerror="fbSwap(this)" alt="${c.name}"><span class="thumb-label">${c.name}</span></button>`).join('');
+}
+function selectConcept(i){
+  current=i; showingOriginal=false;
+  const img=$('mainImage');
+  img.style.animation='none'; void img.offsetWidth; img.style.animation='';
+  img.onerror=()=>{img.onerror=null; img.src=concepts[i].fb;};
+  img.src=concepts[i].url;
+  $('conceptName').textContent=concepts[i].name;
+  renderThumbs();
+}
+function toggleOriginal(btn){
+  if(!userFileURL) return;
+  showingOriginal=!showingOriginal;
+  $('mainImage').src = showingOriginal? userFileURL : concepts[current].url;
+  btn.textContent = showingOriginal? '← Вернуть концепт' : '👁 Ваше фото';
+}
+function restart(){ go('screen-menu'); dropzone.hidden=false; preview.hidden=true; fileInput.value=''; }
+
+async function downloadCurrent(){
+  const url= showingOriginal? userFileURL : $('mainImage').src;
+  try{
+    const r=await fetch(url); const b=await r.blob();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='interio-ai-concept-'+(current+1)+'.jpg';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  }catch(e){ window.open(url,'_blank'); }
+}
+
+(async function init(){
+  loadSettings();
+  renderStatus();
+  serviceOnline=await checkService();
+  renderStatus();
+  renderGallery();
+})();
+</script>
+</body>
+</html>
